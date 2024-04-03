@@ -42,6 +42,27 @@ export default class QuadTree {
         }
         this.points = null;
     }
+
+    getPoints(pt, maxDist, found = []) {
+        if (!(pt instanceof Point)) pt = new Point(pt);
+        //not yet divided
+        if (Array.isArray(this.points)) {
+            if (!this.bounds.intersectsWithCircle(pt, maxDist)) return found;
+            const rSq = maxDist * maxDist;
+            for (let p of this.points) {
+                if (pt.sqDistanceTo(p) <= rSq) found.push(p);
+            }
+            return found;
+        }
+        //divided
+        return [
+            ...found,
+            ...this.nw.getPoints(pt, maxDist, found),
+            ...this.ne.getPoints(pt, maxDist, found),
+            ...this.sw.getPoints(pt, maxDist, found),
+            ...this.se.getPoints(pt, maxDist, found)
+        ];
+    }
 }
 
 class Point {
@@ -65,6 +86,9 @@ class Point {
     }
 }
 
+/**
+ * x,y is top-left corner of rectangle, not center
+ */
 class Rect {
     constructor({ x = 0, y = 0, w, width, h, height }) {
         if (!(w ?? width) || !(h ?? height)) throw TypeError("Incorrect Rect args");
@@ -88,5 +112,19 @@ class Rect {
             sw: {x: this.x, y: this.y+h, w, h},
             se: {x: this.x+w, y: this.y+h, w, h}
         };
+    }
+    intersectsWithCircle(pt, r) {
+        //circle center within Rect?
+        if (!(pt instanceof Point)) pt = new Point(pt);
+        if (this.contains(pt)) return true;
+        //circle intersects side of Rect?
+        const distX = Math.abs(pt.x-this.x);
+        if (distX > (r+this.w/2)) return false;
+        const distY = Math.abs(pt.y-this.y);
+        if (distY > (r+this.h/2)) return false;
+        //circle exactly intersects corner of Rect?
+        const rectCenter = new Point({x: this.x + this.w/2, y: this.y + this.h/2});
+        const diagSquared = rectCenter.sqDistanceTo(new Point({x: this.x, y: this.y}));
+        return pt.sqDistanceTo(rectCenter) <= diagSquared + r * r;
     }
 }
