@@ -50,7 +50,7 @@ export default class QuadTree {
             if (!this.bounds.intersectsWithCircle(pt, maxDist)) return found;
             const rSq = maxDist * maxDist;
             for (let p of this.points) {
-                if (pt.sqDistanceTo(p) <= rSq) found.push(p);
+                if (pt.sqDistanceTo(p) <= rSq) found.push({x: p.x, y: p.y, data: p.data});
             }
             return found;
         }
