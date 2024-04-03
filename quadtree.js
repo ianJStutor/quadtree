@@ -7,8 +7,24 @@ export default class QuadTree {
         this.points = [];
     }
 
-    insert(pt) {
-        
+    insert(point) {
+        const pt = new Point(point);
+        //not yet divided
+        if (Array.isArray(this.points)) {
+            //in bounds?
+            if (!this.bounds.contains(pt)) return false;
+            //insert
+            this.points.push(pt);
+            if (this.points.length >= this.capacity) this.divide();
+            return true;
+        }
+        //divided
+        return (
+            this.nw.insert(pt) || 
+            this.ne.insert(pt) || 
+            this.sw.insert(pt) || 
+            this.se.insert(pt)
+        );
     }
 
     divide() {
@@ -29,7 +45,7 @@ export default class QuadTree {
 }
 
 class Point {
-    constructor({x,y}, data = {}) {
+    constructor({ x, y, data = {} }) {
         if (x === undefined || y === undefined) throw TypeError("Incorrect Point args");
         this.x = x;
         this.y = y;
@@ -50,7 +66,7 @@ class Point {
 }
 
 class Rect {
-    constructor({x = 0, y = 0, w, width, h, height}) {
+    constructor({ x = 0, y = 0, w, width, h, height }) {
         if (!(w ?? width) || !(h ?? height)) throw TypeError("Incorrect Rect args");
         this.x = x;
         this.y = y;
