@@ -127,4 +127,12 @@ class Rect {
         const diagSquared = rectCenter.sqDistanceTo(new Point({x: this.x, y: this.y}));
         return pt.sqDistanceTo(rectCenter) <= diagSquared + r * r;
     }
+    toObject() {
+        return {
+            x: this.x,
+            y: this.y,
+            w: this.w,
+            h: this.h
+        };
+    }
 }
