@@ -1,10 +1,12 @@
 export default class QuadTree {
     #defaultCapacity = 6;
+    #maxDepth = 8;
 
-    constructor(bounds, capacity = this.#defaultCapacity) {
+    constructor(bounds, capacity = this.#defaultCapacity, depth = 1) {
         this.bounds = new Rect(bounds);
-        this.capacity = Math.max(Number(capacity), 1) || 1;
+        this.capacity = Math.max(Number(capacity), 1) || this.#defaultCapacity;
         this.points = [];
+        this.depth = depth;
     }
 
     insert(point) {
@@ -15,7 +17,10 @@ export default class QuadTree {
             if (!this.bounds.contains(pt)) return false;
             //insert
             this.points.push(pt);
-            if (this.points.length >= this.capacity) this.divide();
+            if (
+                this.points.length > this.capacity && 
+                this.depth < this.#maxDepth
+            ) this.#divide();
             return true;
         }
         //divided
@@ -27,12 +32,12 @@ export default class QuadTree {
         );
     }
 
-    divide() {
+    #divide() {
         const { nw, ne, sw, se } = this.bounds.divide();
-        this.nw = new QuadTree(nw, this.capacity);
-        this.ne = new QuadTree(ne, this.capacity);
-        this.sw = new QuadTree(sw, this.capacity);
-        this.se = new QuadTree(se, this.capacity);
+        this.nw = new QuadTree(nw, this.capacity, this.depth+1);
+        this.ne = new QuadTree(ne, this.capacity, this.depth+1);
+        this.sw = new QuadTree(sw, this.capacity, this.depth+1);
+        this.se = new QuadTree(se, this.capacity, this.depth+1);
         for (let pt of this.points) {
             if (this.nw.insert(pt) ||
                 this.ne.insert(pt) ||
@@ -66,11 +71,11 @@ export default class QuadTree {
 }
 
 class Point {
-    constructor({ x, y, data = {} }) {
+    constructor({ x, y, data }) {
         if (x === undefined || y === undefined) throw TypeError("Incorrect Point args");
         this.x = x;
         this.y = y;
-        this.data = data;
+        if (data) this.data = data;
     }
     sqDistanceTo(pt) {
         if (pt instanceof Point) {
@@ -98,10 +103,9 @@ class Rect {
         this.h = h ?? height;
     }
     contains(pt) {
-        if (pt instanceof Point) {
-            return this.x <= pt.x && this.x+this.w >= pt.x &&
-                    this.y <= pt.y && this.y+this.h >= pt.y;
-        }
+        if (!(pt instanceof Point)) pt = new Point(pt);
+        return this.x <= pt.x && this.x+this.w >= pt.x &&
+                this.y <= pt.y && this.y+this.h >= pt.y;
     }
     divide() {
         const w = this.w/2;
@@ -126,13 +130,5 @@ class Rect {
         const rectCenter = new Point({x: this.x + this.w/2, y: this.y + this.h/2});
         const diagSquared = rectCenter.sqDistanceTo(new Point({x: this.x, y: this.y}));
         return pt.sqDistanceTo(rectCenter) <= diagSquared + r * r;
-    }
-    toObject() {
-        return {
-            x: this.x,
-            y: this.y,
-            w: this.w,
-            h: this.h
-        };
     }
 }
