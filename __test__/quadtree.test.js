@@ -75,7 +75,7 @@ describe("QuadTree instantiation", () => {
     });
 });
 
-describe("Point insertion", () => {
+describe("QuadTree point insertion", () => {
     const rect = {w: 100, h: 100};
     const point1 = {x: 15, y: 15};
     const point2 = {x: -15, y: 15};
@@ -167,5 +167,77 @@ describe("QuadTree division", () => {
         expect(qt.nw.nw.nw.nw.nw.nw.nw.ne).toBeUndefined();
         expect(qt.nw.nw.nw.nw.nw.nw.nw.sw).toBeUndefined();
         expect(qt.nw.nw.nw.nw.nw.nw.nw.se).toBeUndefined();
+    });
+});
+
+describe("QuadTree undivided, get points", () => {
+    const pt1 = {x:50, y:50};
+    const pt2 = {x:1, y:1};
+    const pt3 = {x:50, y:0};
+    const pt4 = {x:-5, y:-5};
+    const pt5 = {x:50, y:-5};
+    const pt6 = {x:50, y:-61};
+    const r = 60;
+    const rect = {w:100, h:100};
+    const points = [{x:0, y:0}, {x:100, y:0}, {x:100, y:100}, {x:0, y:100}];
+    const qt = new QuadTree(rect);
+    points.forEach(p => qt.insert(p));
+    test("circle center in rect, no points found", () => {
+        const result = qt.getPoints(pt1, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(0);
+    });
+    test("circle center in rect, one local point found", () => {
+        const result = qt.getPoints(pt2, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(1);
+        expect(result[0]).toMatchObject(points[0]);
+    });
+    test("circle center in rect, several local points found", () => {
+        const result = qt.getPoints(pt3, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(2);
+        expect(result[0]).toMatchObject(points[0]);
+        expect(result[1]).toMatchObject(points[1]);
+    });
+    test("circle center not in rect, one local point found", () => {
+        const result = qt.getPoints(pt4, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(1);
+        expect(result[0]).toMatchObject(points[0]);
+    });
+    test("circle center not in rect, several local points found", () => {
+        const result = qt.getPoints(pt5, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(2);
+        expect(result[0]).toMatchObject(points[0]);
+        expect(result[1]).toMatchObject(points[1]);
+    });
+    test("circle does not intersect with rect, no local points found", () => {
+        const result = qt.getPoints(pt6, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(0);
+    });
+});
+
+describe("QuadTree divided, get points", () => {
+    const pt1 = {x:50, y:50};
+    const pt2 = {x:0, y:0};
+    const r = 50;
+    const rect = {w:100, h:100};
+    const numPoints = 7;
+    const points = Array(numPoints).fill().map(_ => ({x:Math.random(), y: Math.random()}));
+    const qt = new QuadTree(rect);
+    points.forEach(p => qt.insert(p));
+    test("get no points", () => {
+        const result = qt.getPoints(pt1, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(0);
+    });
+    test("get all points", () => {
+        const result = qt.getPoints(pt2, r);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(numPoints);
+        points.forEach(p => expect(result.some(({x,y}) => x===p.x && y===p.y)).toBe(true));
     });
 });

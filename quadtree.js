@@ -55,17 +55,21 @@ export default class QuadTree {
             if (!this.bounds.intersectsWithCircle(pt, maxDist)) return found;
             const rSq = maxDist * maxDist;
             for (let p of this.points) {
-                if (pt.sqDistanceTo(p) <= rSq) found.push({x: p.x, y: p.y, data: p.data});
+                if (pt.sqDistanceTo(p) <= rSq) {
+                    const point = {x: p.x, y: p.y};
+                    if (p.data) point.data = p.data;
+                    found.push(point);
+                };
             }
             return found;
         }
         //divided
         return [
             ...found,
-            ...this.nw.getPoints(pt, maxDist, found),
-            ...this.ne.getPoints(pt, maxDist, found),
-            ...this.sw.getPoints(pt, maxDist, found),
-            ...this.se.getPoints(pt, maxDist, found)
+            ...this.nw.getPoints(pt, maxDist),
+            ...this.ne.getPoints(pt, maxDist),
+            ...this.sw.getPoints(pt, maxDist),
+            ...this.se.getPoints(pt, maxDist)
         ];
     }
 }
