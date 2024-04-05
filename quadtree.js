@@ -56,9 +56,8 @@ export default class QuadTree {
             const rSq = maxDist * maxDist;
             for (let p of this.points) {
                 if (pt.sqDistanceTo(p) <= rSq) {
-                    const point = {x: p.x, y: p.y};
-                    if (p.data) point.data = p.data;
-                    found.push(point);
+                    while (p.originalPoint) p = p.originalPoint;
+                    found.push(p);
                 };
             }
             return found;
@@ -73,6 +72,26 @@ export default class QuadTree {
         ];
     }
 
+    getRects(rects = []) {
+        //not yet divided
+        if (Array.isArray(this.points)) {
+            return [...rects, {
+                x: this.bounds.x,
+                y: this.bounds.y,
+                w: this.bounds.w,
+                h: this.bounds.h
+            }];
+        }
+        //divided
+        return [
+            ...rects,
+            ...this.nw.getRects(),
+            ...this.ne.getRects(),
+            ...this.sw.getRects(),
+            ...this.se.getRects()
+        ];
+    }
+
     empty() {
         this.points = [];
         if (this.nw) delete this.nw;
@@ -84,11 +103,11 @@ export default class QuadTree {
 }
 
 class Point {
-    constructor({ x, y, data }) {
-        if (x === undefined || y === undefined) throw TypeError("Incorrect Point args");
-        this.x = x;
-        this.y = y;
-        if (data) this.data = data;
+    constructor(p) {
+        if (p.x === undefined || p.y === undefined) throw TypeError("Incorrect Point args");
+        this.x = p.x;
+        this.y = p.y;
+        this.originalPoint = p;
     }
     sqDistanceTo(pt) {
         if (pt instanceof Point) {
