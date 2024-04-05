@@ -241,3 +241,26 @@ describe("QuadTree divided, get points", () => {
         points.forEach(p => expect(result.some(({x,y}) => x===p.x && y===p.y)).toBe(true));
     });
 });
+
+describe("QuadTree empty", () => {
+    const rect = {w:100, h:100};
+    const numPoints = 7;
+    const points = Array(numPoints).fill().map(_ => ({x:Math.random(), y: Math.random()}));
+    const qt = new QuadTree(rect);
+    points.forEach(p => qt.insert(p));
+    test("has points and divisions", () => {
+        expect(qt.points).toBeNull();
+        expect(qt.nw).toBeInstanceOf(QuadTree);
+        expect(qt.ne).toBeInstanceOf(QuadTree);
+        expect(qt.sw).toBeInstanceOf(QuadTree);
+        expect(qt.se).toBeInstanceOf(QuadTree);
+    });
+    test("can empty", () => {
+        expect(qt.empty()).toBe(true);
+        expect(Array.isArray(qt.points)).toBe(true);
+        expect(qt.nw).toBeUndefined();
+        expect(qt.ne).toBeUndefined();
+        expect(qt.sw).toBeUndefined();
+        expect(qt.se).toBeUndefined();
+    });
+});

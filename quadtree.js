@@ -72,6 +72,15 @@ export default class QuadTree {
             ...this.se.getPoints(pt, maxDist)
         ];
     }
+
+    empty() {
+        this.points = [];
+        if (this.nw) delete this.nw;
+        if (this.ne) delete this.ne;
+        if (this.sw) delete this.sw;
+        if (this.se) delete this.se;
+        return true;
+    }
 }
 
 class Point {
