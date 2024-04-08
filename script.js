@@ -3,6 +3,7 @@ import QuadTree from "./quadtree.js";
 //state vars (dependent on canvas size)
 let qt;
 let particles;
+let pointer = {x:0, y:0};
 
 //settings (relative to canvas size)
 let numParticles;
@@ -10,6 +11,7 @@ let minRadius;
 let maxRadius;
 let minVelocity;
 let maxVelocity;
+let pointerRadius;
 
 //canvas
 const canvas = document.querySelector("canvas");
@@ -26,7 +28,10 @@ function resizeCanvas() {
     maxVelocity = maxRadius/3;
     minVelocity = maxVelocity/3;
     particles = Array(numParticles).fill().map(getParticle);
+    pointerRadius = maxRadius * 10;
 }
+canvas.addEventListener("pointermove", ({x,y}) => pointer = {x,y});
+canvas.addEventListener("touchmove", ({touches}) => pointer = {x: touches[0].clientX, y: touches[0].clientY});
 
 //particles
 function getParticle() {
@@ -94,6 +99,18 @@ function loop() {
     for (let {x,y,w,h} of qt.getRects()) {
         ctx.strokeRect(x, y, w, h);
     }
+    const pointerPoints = qt.getPoints(pointer, pointerRadius);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#ffffffaa";
+    for (let p of pointerPoints) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.stroke();
+    }
+    ctx.strokeStyle = "#ff0000aa";
+    ctx.beginPath();
+    ctx.arc(pointer.x, pointer.y, pointerRadius, 0, Math.PI*2);
+    ctx.stroke();
     requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

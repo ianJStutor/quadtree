@@ -10,13 +10,13 @@ export default class QuadTree {
     }
 
     insert(point) {
-        const pt = new Point(point);
+        if (!Point.isValid(point)) throw TypeError("Not a valid point", point);
         //not yet divided
         if (Array.isArray(this.points)) {
             //in bounds?
-            if (!this.bounds.contains(pt)) return false;
+            if (!this.bounds.contains(point)) return false;
             //insert
-            this.points.push(pt);
+            this.points.push(point);
             if (
                 this.points.length > this.capacity && 
                 this.depth < this.#maxDepth
@@ -25,10 +25,10 @@ export default class QuadTree {
         }
         //divided
         return (
-            this.nw.insert(pt) || 
-            this.ne.insert(pt) || 
-            this.sw.insert(pt) || 
-            this.se.insert(pt)
+            this.nw.insert(point) || 
+            this.ne.insert(point) || 
+            this.sw.insert(point) || 
+            this.se.insert(point)
         );
     }
 
@@ -49,16 +49,13 @@ export default class QuadTree {
     }
 
     getPoints(pt, maxDist, found = []) {
-        if (!(pt instanceof Point)) pt = new Point(pt);
+        if (!Point.isValid(pt)) throw TypeError("Not a valid point", pt);
         //not yet divided
         if (Array.isArray(this.points)) {
             if (!this.bounds.intersectsWithCircle(pt, maxDist)) return found;
             const rSq = maxDist * maxDist;
             for (let p of this.points) {
-                if (pt.sqDistanceTo(p) <= rSq) {
-                    while (p.originalPoint) p = p.originalPoint;
-                    found.push(p);
-                };
+                if (Point.sqDistance(pt, p) <= rSq) found.push(p);
             }
             return found;
         }
@@ -103,23 +100,17 @@ export default class QuadTree {
 }
 
 class Point {
-    constructor(p) {
-        if (p.x === undefined || p.y === undefined) throw TypeError("Incorrect Point args");
-        this.x = p.x;
-        this.y = p.y;
-        this.originalPoint = p;
+    static isValid(...pts) {
+        return pts.reduce((a,b) => (a && b.x !== undefined && b.y !== undefined), true);
     }
-    sqDistanceTo(pt) {
-        if (pt instanceof Point) {
-            const dx = pt.x - this.x;
-            const dy = pt.y - this.y;
-            return dx * dx + dy * dy;
-        }
+    static sqDistance(pt1, pt2) {
+        if (!Point.isValid(pt1, pt2)) return NaN;
+        const dx = pt1.x - pt2.x;
+        const dy = pt1.y - pt2.y;
+        return dx * dx + dy * dy;
     }
-    distanceTo(pt) {
-        if (pt instanceof Point) {
-            return Math.sqrt(this.sqDistanceTo(pt));
-        }
+    distance(pt1, pt2) {
+        return Math.sqrt(Point.sqDistance(pt1, pt2));
     }
 }
 
@@ -135,7 +126,7 @@ class Rect {
         this.h = h ?? height;
     }
     contains(pt) {
-        if (!(pt instanceof Point)) pt = new Point(pt);
+        if (!Point.isValid(pt)) throw TypeError("Not a valid point", pt);
         return this.x <= pt.x && this.x+this.w >= pt.x &&
                 this.y <= pt.y && this.y+this.h >= pt.y;
     }
@@ -151,7 +142,7 @@ class Rect {
     }
     intersectsWithCircle(pt, r) {
         //circle center within Rect?
-        if (!(pt instanceof Point)) pt = new Point(pt);
+        if (!(Point.isValid(pt))) throw TypeError("Not a valid point", pt);
         if (this.contains(pt)) return true;
         //circle intersects side of Rect?
         const distX = Math.abs(pt.x-this.x);
@@ -159,8 +150,8 @@ class Rect {
         const distY = Math.abs(pt.y-this.y);
         if (distY > (r+this.h/2)) return false;
         //circle exactly intersects corner of Rect?
-        const rectCenter = new Point({x: this.x + this.w/2, y: this.y + this.h/2});
-        const diagSquared = rectCenter.sqDistanceTo(new Point({x: this.x, y: this.y}));
-        return pt.sqDistanceTo(rectCenter) <= diagSquared + r * r;
+        const rectCenter = {x: this.x + this.w/2, y: this.y + this.h/2};
+        const diagSquared = Point.sqDistance(rectCenter, {x: this.x, y: this.y});
+        return Point.sqDistance(rectCenter, pt) <= diagSquared + r * r;
     }
 }

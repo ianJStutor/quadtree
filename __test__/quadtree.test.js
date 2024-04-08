@@ -86,7 +86,6 @@ describe("QuadTree point insertion", () => {
     test("point in bounds", () => {
         const qt = new QuadTree(rect);
         expect(qt.insert(point1)).toBe(true);
-        expect(qt.insert(point1)).toBe(true);
         expect(qt.points[0]).toMatchObject(point1);
     });
     test("point out of bounds", () => {
@@ -103,7 +102,7 @@ describe("QuadTree point insertion", () => {
     test("point has data", () => {
         const qt = new QuadTree(rect);
         expect(qt.insert(point6)).toBe(true);
-        expect(qt.points[0].originalPoint).toMatchObject(point6);
+        expect(qt.points[0]).toMatchObject(point6);
     });
 });
 
