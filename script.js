@@ -94,9 +94,16 @@ function loop() {
     for (let p of particles) {
         drawParticle(p);
     }
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "silver";
-    for (let {x,y,w,h} of qt.getRects()) {
+    for (let rect of qt.getRects()) {
+        let {x,y,w,h} = rect;
+        if ((new Rect(rect)).intersectsWithCircle(pointer, pointerRadius)) {
+            ctx.strokeStyle = "cyan";
+            ctx.lineWidth = 4;
+        }
+        else {
+            ctx.strokeStyle = "silver";
+            ctx.lineWidth = 0.5;
+        }
         ctx.strokeRect(x, y, w, h);
     }
     const pointerPoints = qt.getPoints(pointer, pointerRadius);
@@ -114,3 +121,65 @@ function loop() {
     requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+
+class Point {
+    static isValid(...pts) {
+        return pts.reduce((a,b) => (a && b.x !== undefined && b.y !== undefined), true);
+    }
+    static sqDistance(pt1, pt2) {
+        if (!Point.isValid(pt1, pt2)) return NaN;
+        const dx = pt1.x - pt2.x;
+        const dy = pt1.y - pt2.y;
+        return dx * dx + dy * dy;
+    }
+    distance(pt1, pt2) {
+        return Math.sqrt(Point.sqDistance(pt1, pt2));
+    }
+}
+
+/**
+ * x,y is top-left corner of rectangle, not center
+ */
+class Rect {
+    constructor({ x = 0, y = 0, w, width, h, height }) {
+        if (!(w ?? width) || !(h ?? height)) throw TypeError("Incorrect Rect args");
+        this.x = x;
+        this.y = y;
+        this.w = w ?? width;
+        this.h = h ?? height;
+    }
+    contains(pt) {
+        if (!Point.isValid(pt)) throw TypeError("Not a valid point", pt);
+        return this.x <= pt.x && this.x+this.w >= pt.x &&
+                this.y <= pt.y && this.y+this.h >= pt.y;
+    }
+    divide() {
+        const w = this.w/2;
+        const h = this.h/2;
+        return {
+            nw: {x: this.x, y: this.y, w, h},
+            ne: {x: this.x+w, y: this.y, w, h},
+            sw: {x: this.x, y: this.y+h, w, h},
+            se: {x: this.x+w, y: this.y+h, w, h}
+        };
+    }
+    intersectsWithCircle(pt, r) {
+        //circle center within Rect?
+        if (!(Point.isValid(pt))) throw TypeError("Not a valid point", pt);
+        if (this.contains(pt)) return true;
+        //circle intersects side of Rect?
+        const distX = Math.abs(pt.x-(this.x+this.w/2));
+        if (this.y <= pt.y && this.y+this.h >= pt.y && distX < (r+this.w/2)) return true;
+        const distY = Math.abs(pt.y-(this.y+this.h/2));
+        if (this.x <= pt.x && this.x+this.w >= pt.x && distY < (r+this.h/2)) return true;
+        //circle intersects corner of Rect?
+        const nearestCorner = {x:0,y:0};
+        if (pt.x < this.x) nearestCorner.x = this.x;
+        else if (pt.x > this.x+this.w) nearestCorner.x = this.x+this.w;
+        if (pt.y < this.y) nearestCorner.y = this.y;
+        else if (pt.y > this.y+this.h) nearestCorner.y = this.y+this.h;
+        const cornerDistSq = Point.sqDistance(pt, nearestCorner);
+        return cornerDistSq <= r * r;
+    }
+}

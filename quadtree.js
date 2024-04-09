@@ -145,13 +145,17 @@ class Rect {
         if (!(Point.isValid(pt))) throw TypeError("Not a valid point", pt);
         if (this.contains(pt)) return true;
         //circle intersects side of Rect?
-        const distX = Math.abs(pt.x-this.x);
-        if (distX > (r+this.w/2)) return false;
-        const distY = Math.abs(pt.y-this.y);
-        if (distY > (r+this.h/2)) return false;
-        //circle exactly intersects corner of Rect?
-        const rectCenter = {x: this.x + this.w/2, y: this.y + this.h/2};
-        const diagSquared = Point.sqDistance(rectCenter, {x: this.x, y: this.y});
-        return Point.sqDistance(rectCenter, pt) <= diagSquared + r * r;
+        const distX = Math.abs(pt.x-(this.x+this.w/2));
+        if (this.y <= pt.y && this.y+this.h >= pt.y && distX < (r+this.w/2)) return true;
+        const distY = Math.abs(pt.y-(this.y+this.h/2));
+        if (this.x <= pt.x && this.x+this.w >= pt.x && distY < (r+this.h/2)) return true;
+        //circle intersects corner of Rect?
+        const nearestCorner = {x:0,y:0};
+        if (pt.x < this.x) nearestCorner.x = this.x;
+        else if (pt.x > this.x+this.w) nearestCorner.x = this.x+this.w;
+        if (pt.y < this.y) nearestCorner.y = this.y;
+        else if (pt.y > this.y+this.h) nearestCorner.y = this.y+this.h;
+        const cornerDistSq = Point.sqDistance(pt, nearestCorner);
+        return cornerDistSq <= r * r;
     }
 }
