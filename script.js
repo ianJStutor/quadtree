@@ -28,6 +28,8 @@ function resizeCanvas() {
     maxVelocity = maxRadius/3;
     minVelocity = maxVelocity/3;
     particles = Array(numParticles).fill().map(getParticle);
+    pointer.x = canvas.width/2;
+    pointer.y = canvas.height/2;
     pointerRadius = maxRadius * 10;
 }
 canvas.addEventListener("pointermove", ({x,y}) => pointer = {x,y});
